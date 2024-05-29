@@ -40,7 +40,7 @@ func (c *Category) ListCategories() ([]Category, error) {
 	categories := []Category{}
 	for rows.Next() {
 		var id, name, description string
-		if err := rows.Scan(&id, &name); err != nil {
+		if err := rows.Scan(&id, &name, &description); err != nil {
 			return nil, err
 		}
 		categories = append(categories, Category{ID: id, Name: name, Description: description})
