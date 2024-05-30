@@ -51,7 +51,7 @@ func (c *Course) ListCourses() ([]Course, error) {
 	return courses, nil
 }
 
-func (c *Course) FindByCategoryId(categoryId string) ([]Course, error) {
+func (c *Category) FindByCategoryId(categoryId string) ([]Course, error) {
 	rows, err := c.db.Query("SELECT id, name, description, category_id FROM courses WHERE category_id = $1", categoryId)
 	if err != nil {
 		return nil, err
