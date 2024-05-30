@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 
 	"github.com/andrefsilveira1/grpc/internal/database"
 	"github.com/andrefsilveira1/grpc/internal/pb"
@@ -68,4 +69,54 @@ func (c *CategoryService) FindCategoryById(ctx context.Context, in *pb.FindCateg
 	}
 
 	return categoryResponse, nil
+}
+
+func (c *CategoryService) CreateCategoryStream(stream pb.CategoryService_CreateCategoryStreamServer) error {
+	categories := &pb.CategoryList{}
+
+	for {
+		category, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(categories)
+		}
+		if err != nil {
+			return err
+		}
+
+		categoryResult, err := c.CategoryDB.CreateCategory(category.Name, category.Description)
+		if err != nil {
+			return err
+		}
+		categories.Categories = append(categories.Categories, &pb.Category{
+			Id:          categoryResult.ID,
+			Name:        categoryResult.Name,
+			Description: categoryResult.Description,
+		})
+	}
+}
+
+func (c *CategoryService) CreateCategoryStreamBidirectional(stream pb.CategoryService_CreateCategoryStreamBidirectionalServer) error {
+	for {
+		category, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		categoryResult, err := c.CategoryDB.CreateCategory(category.Name, category.Description)
+		if err != nil {
+			return err
+		}
+
+		err = stream.Send(&pb.Category{
+			Id:          categoryResult.ID,
+			Name:        categoryResult.Name,
+			Description: categoryResult.Description,
+		})
+		if err != nil {
+			return err
+		}
+	}
 }
